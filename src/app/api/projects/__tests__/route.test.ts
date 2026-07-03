@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import { GET } from '../route'
+import { GET, POST } from '../route'
 import { NextRequest } from 'next/server'
 
 const mockProjects = [
@@ -27,5 +27,19 @@ describe('GET /api/projects', () => {
     const json = await res.json()
     expect(res.status).toBe(200)
     expect(json).toEqual(mockProjects)
+  })
+})
+
+describe('POST /api/projects', () => {
+  it('returns 400 when name is missing', async () => {
+    const req = new NextRequest('http://localhost/api/projects', {
+      method: 'POST',
+      body: JSON.stringify({ template_id: 't1' }),
+      headers: { 'content-type': 'application/json' },
+    })
+    const res = await POST(req)
+    expect(res.status).toBe(400)
+    const json = await res.json()
+    expect(json.error).toBe('name is required')
   })
 })
