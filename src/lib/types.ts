@@ -51,8 +51,10 @@ export interface ProjectStep {
   status: StepStatus
   order: number
   updated_at: string
-  // joined
+  // joined / computed
   template_step?: WorkflowTemplateStep
+  task_count?: number
+  done_count?: number
 }
 
 export interface Task {
