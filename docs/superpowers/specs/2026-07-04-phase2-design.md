@@ -132,7 +132,7 @@ Phase 2 adds four features to complete the SA Workflow Management System. All fe
 
 - All notification inserts use the Supabase `admin` client (service role) to bypass RLS, inserted server-side inside API route handlers
 - No new DB tables or schema changes required — `notifications` table already exists from Phase 1
-- `task_due_soon` cron job queries tasks where `due_date = today + 1` and `status != 'done'`, then inserts one notification per task per assignee
+- `task_due_soon` cron job queries tasks where `due_date = today + 1` and `status != 'done'`, then inserts one notification per task per assignee; skips if a `task_due_soon` notification for that task already exists (prevents duplicate daily alerts)
 - Status transitions are validated server-side only; client UI hides invalid options but does not solely rely on it
 
 ---
