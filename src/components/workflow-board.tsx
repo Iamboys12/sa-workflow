@@ -1,8 +1,8 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import StepCard from './step-card'
-import type { ProjectStep } from '@/lib/types'
+import type { ProjectStep, StepStatus } from '@/lib/types'
 
 async function fetchSteps(projectId: string): Promise<ProjectStep[]> {
   const res = await fetch(`/api/projects/${projectId}/steps`)
@@ -10,10 +10,30 @@ async function fetchSteps(projectId: string): Promise<ProjectStep[]> {
   return res.json()
 }
 
-export default function WorkflowBoard({ projectId }: { projectId: string }) {
+export default function WorkflowBoard({
+  projectId,
+  isSA = false,
+}: {
+  projectId: string
+  isSA?: boolean
+}) {
+  const queryClient = useQueryClient()
   const { data: steps, isLoading, error } = useQuery({
     queryKey: ['project-steps', projectId],
     queryFn: () => fetchSteps(projectId),
+  })
+
+  const { mutate: updateStatus } = useMutation({
+    mutationFn: async ({ stepId, status }: { stepId: string; status: StepStatus }) => {
+      const res = await fetch(`/api/projects/${projectId}/steps/${stepId}`, {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ status }),
+      })
+      if (!res.ok) throw new Error('Failed to update step status')
+      return res.json()
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['project-steps', projectId] }),
   })
 
   if (isLoading) return <p className="text-gray-500">Loading workflow…</p>
@@ -23,7 +43,13 @@ export default function WorkflowBoard({ projectId }: { projectId: string }) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
       {steps.map(step => (
-        <StepCard key={step.id} step={step} projectId={projectId} />
+        <StepCard
+          key={step.id}
+          step={step}
+          projectId={projectId}
+          isSA={isSA}
+          onStatusChange={isSA ? status => updateStatus({ stepId: step.id, status }) : undefined}
+        />
       ))}
     </div>
   )

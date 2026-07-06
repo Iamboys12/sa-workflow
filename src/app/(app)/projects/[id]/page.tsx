@@ -17,6 +17,8 @@ export default async function ProjectPage({ params }: { params: { id: string } }
   const { data: profile } = await supabase
     .from('profiles').select('role').eq('id', user!.id).single()
 
+  const isSA = profile?.role === 'sa'
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -28,14 +30,14 @@ export default async function ProjectPage({ params }: { params: { id: string } }
         </div>
         <div className="flex items-center gap-2">
           <Badge>{project.status}</Badge>
-          {profile?.role === 'sa' && (
+          {isSA && (
             <Link href={`/projects/${project.id}/members`}>
               <Button variant="outline" size="sm">Manage Members</Button>
             </Link>
           )}
         </div>
       </div>
-      <WorkflowBoard projectId={project.id} />
+      <WorkflowBoard projectId={project.id} isSA={isSA} />
     </div>
   )
 }

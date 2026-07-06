@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import StepCard from '../step-card'
 import type { ProjectStep } from '@/lib/types'
 
@@ -29,5 +29,16 @@ describe('StepCard', () => {
     const doneStep = { ...mockStep, status: 'done' as const }
     render(<StepCard step={doneStep} projectId="p1" />)
     expect(screen.getByText('✓')).toBeInTheDocument()
+  })
+
+  it('does not show status menu button when isSA is false', () => {
+    render(<StepCard step={mockStep} projectId="p1" isSA={false} />)
+    expect(screen.queryByText('⋯')).not.toBeInTheDocument()
+  })
+
+  it('shows status menu button when isSA and onStatusChange provided', () => {
+    const onStatusChange = jest.fn()
+    render(<StepCard step={mockStep} projectId="p1" isSA={true} onStatusChange={onStatusChange} />)
+    expect(screen.getByText('⋯')).toBeInTheDocument()
   })
 })
