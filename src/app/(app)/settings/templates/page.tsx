@@ -1,6 +1,9 @@
 import { createServerSupabase } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import TemplateDeleteButton from '@/components/template-delete-button'
 import type { WorkflowTemplate, WorkflowTemplateStep } from '@/lib/types'
 
 type TemplateWithSteps = WorkflowTemplate & { steps: WorkflowTemplateStep[] }
@@ -20,16 +23,29 @@ export default async function TemplatesPage() {
 
   return (
     <div className="max-w-2xl">
-      <h1 className="text-2xl font-bold mb-6">Workflow Templates</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Workflow Templates</h1>
+        <Link href="/settings/templates/new">
+          <Button>+ New Template</Button>
+        </Link>
+      </div>
       <div className="space-y-4">
         {(templates as TemplateWithSteps[] ?? []).map(t => (
           <div key={t.id} className="border rounded-lg p-4">
             <div className="flex items-center gap-2 mb-3">
               <h2 className="font-semibold">{t.name}</h2>
               {t.is_default && <Badge className="bg-blue-100 text-blue-700">default</Badge>}
-              <span className="text-sm text-gray-400 ml-auto">
+              <span className="text-sm text-gray-400 ml-auto mr-2">
                 {t.steps?.length ?? 0} steps
               </span>
+              {!t.is_default && (
+                <div className="flex gap-2">
+                  <Link href={`/settings/templates/${t.id}/edit`}>
+                    <Button variant="outline" size="sm">Edit</Button>
+                  </Link>
+                  <TemplateDeleteButton templateId={t.id} />
+                </div>
+              )}
             </div>
             <div className="space-y-1">
               {(t.steps ?? [])
@@ -46,9 +62,6 @@ export default async function TemplatesPage() {
           </div>
         ))}
       </div>
-      <p className="text-sm text-gray-500 mt-6">
-        Custom templates can be created via API or extended in Phase 2.
-      </p>
     </div>
   )
 }
