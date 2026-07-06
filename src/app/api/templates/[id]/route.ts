@@ -23,6 +23,10 @@ export async function PATCH(
   const body = await req.json()
   const { name, steps } = body
 
+  if (steps !== undefined && !Array.isArray(steps)) {
+    return NextResponse.json({ error: 'steps must be an array' }, { status: 400 })
+  }
+
   if (name !== undefined) {
     if (!name?.trim()) return NextResponse.json({ error: 'name cannot be empty' }, { status: 400 })
     const { error } = await supabase
@@ -59,6 +63,10 @@ export async function DELETE(
   const supabase = await createServerSupabase()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { data: profile } = await supabase
+    .from('profiles').select('role').eq('id', user.id).single()
+  if (profile?.role !== 'sa') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const { data: t } = await supabase
     .from('workflow_templates').select('is_default').eq('id', params.id).single()
