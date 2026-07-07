@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import StepCard from '../step-card'
 import type { ProjectStep } from '@/lib/types'
 

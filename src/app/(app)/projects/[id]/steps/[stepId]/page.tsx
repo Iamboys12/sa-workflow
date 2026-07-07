@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import TaskList from '@/components/task-list'
+import StepStatusSelect from '@/components/step-status-select'
 
 const modelColors: Record<string, string> = {
   'human-led':   'bg-purple-100 text-purple-700',
@@ -41,10 +42,17 @@ export default async function StepDetailPage({
         </Link>
       </div>
 
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex items-center gap-3 mb-6 flex-wrap">
         <span className="text-gray-400 text-sm">Step {step.order}</span>
         <h1 className="text-2xl font-bold">{title}</h1>
         {model && <Badge className={modelColors[model]}>{model}</Badge>}
+        {isSA && (
+          <StepStatusSelect
+            projectId={params.id}
+            stepId={params.stepId}
+            status={step.status}
+          />
+        )}
       </div>
 
       {deliverables.length > 0 && (
