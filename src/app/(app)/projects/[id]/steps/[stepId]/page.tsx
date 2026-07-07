@@ -29,10 +29,24 @@ export default async function StepDetailPage({
 
   if (!step) notFound()
 
+  const isSA = profile?.role === 'sa'
+
+  let isTL = false
+  if (!isSA) {
+    const { data: membership } = await supabase
+      .from('project_members')
+      .select('role')
+      .eq('project_id', params.id)
+      .eq('user_id', user!.id)
+      .single()
+    isTL = membership?.role === 'tech_lead'
+  }
+
+  const canAssign = isSA || isTL
+
   const title = step.template_step?.title ?? `Step ${step.order}`
   const model = step.template_step?.collaboration_model
   const deliverables: string[] = step.template_step?.deliverables ?? []
-  const isSA = profile?.role === 'sa'
 
   return (
     <div className="max-w-2xl">
@@ -68,7 +82,13 @@ export default async function StepDetailPage({
 
       <div>
         <h2 className="text-lg font-semibold mb-3">Tasks</h2>
-        <TaskList stepId={step.id} isSA={isSA} />
+        <TaskList
+          stepId={step.id}
+          isSA={isSA}
+          canAssign={canAssign}
+          projectId={params.id}
+          currentUserId={user!.id}
+        />
       </div>
     </div>
   )

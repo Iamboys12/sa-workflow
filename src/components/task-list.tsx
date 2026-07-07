@@ -16,9 +16,15 @@ async function fetchTasks(stepId: string): Promise<Task[]> {
 export default function TaskList({
   stepId,
   isSA,
+  canAssign,
+  projectId,
+  currentUserId,
 }: {
   stepId: string
   isSA: boolean
+  canAssign: boolean
+  projectId: string
+  currentUserId: string
 }) {
   const qc = useQueryClient()
   const [newTitle, setNewTitle] = useState('')
@@ -78,6 +84,9 @@ export default function TaskList({
           key={task.id}
           task={task}
           isSA={isSA}
+          canAssign={canAssign}
+          projectId={projectId}
+          currentUserId={currentUserId}
           onUpdate={(id, updates) => updateMutation.mutateAsync({ id, updates })}
           onDelete={(id) => deleteMutation.mutateAsync(id)}
         />
