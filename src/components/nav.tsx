@@ -21,6 +21,11 @@ export default function Nav({ profile }: { profile: Profile | null }) {
     <nav className="border-b bg-white px-4 py-3 flex items-center justify-between max-w-7xl mx-auto">
       <div className="flex items-center gap-6">
         <Link href="/dashboard" className="font-semibold text-gray-900">SA Workflow</Link>
+        {profile && (
+          <Link href="/my-tasks" className="text-sm text-gray-600 hover:text-gray-900">
+            My Tasks
+          </Link>
+        )}
         {profile?.role === 'sa' && (
           <Link href="/settings/templates" className="text-sm text-gray-600 hover:text-gray-900">
             Templates
