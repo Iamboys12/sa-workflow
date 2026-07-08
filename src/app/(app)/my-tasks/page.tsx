@@ -1,4 +1,5 @@
 import { createServerSupabase } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 
@@ -18,6 +19,7 @@ interface StepJoin {
 export default async function MyTasksPage() {
   const supabase = await createServerSupabase()
   const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
 
   const today = new Date().toISOString().split('T')[0]
 
@@ -28,10 +30,10 @@ export default async function MyTasksPage() {
       step:project_steps!project_step_id(
         project_id, order,
         project:projects!project_id(name),
-        template_step:workflow_template_steps!template_step_id(title, order)
+        template_step:workflow_template_steps!template_step_id(title)
       )
     `)
-    .eq('assigned_to', user!.id)
+    .eq('assigned_to', user.id)
     .order('due_date', { ascending: true, nullsFirst: false })
     .order('created_at', { ascending: true })
 
