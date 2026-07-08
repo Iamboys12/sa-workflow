@@ -90,3 +90,16 @@ export interface ProjectWithSteps extends Project {
 export interface StepWithTasks extends ProjectStep {
   tasks: Task[]
 }
+
+export type TaskEventType = 'comment' | 'status_change' | 'assigned' | 'due_date_set'
+
+export interface TaskEvent {
+  id: string
+  task_id: string
+  user_id: string
+  user_name: string
+  type: TaskEventType
+  body: string | null
+  meta: Record<string, unknown> | null
+  created_at: string
+}
