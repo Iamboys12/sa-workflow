@@ -2,6 +2,7 @@
  * @jest-environment node
  */
 import { GET, POST } from '../route'
+import { DELETE } from '../[eventId]/route'
 import { NextRequest } from 'next/server'
 
 const mockGetUser = jest.fn()
@@ -124,8 +125,6 @@ describe('POST /api/tasks/[id]/events', () => {
     expect(json).toMatchObject({ id: 'ev2', type: 'comment' })
   })
 })
-
-import { DELETE } from '../[eventId]/route'
 
 const eventCtx = { params: { id: 't1', eventId: 'ev1' } }
 
