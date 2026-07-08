@@ -124,3 +124,74 @@ describe('POST /api/tasks/[id]/events', () => {
     expect(json).toMatchObject({ id: 'ev2', type: 'comment' })
   })
 })
+
+import { DELETE } from '../[eventId]/route'
+
+const eventCtx = { params: { id: 't1', eventId: 'ev1' } }
+
+function setupDeleteMocks({ role = 'sa', eventOwnerId = 'u1', eventType = 'comment' } = {}) {
+  mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } })
+  mockFrom.mockImplementation((table: string) => {
+    if (table === 'profiles') return {
+      select: () => ({
+        eq: () => ({ single: jest.fn().mockResolvedValue({ data: { role, full_name: 'Alice' } }) }),
+        in: jest.fn().mockResolvedValue({ data: [] }),
+      }),
+    }
+    if (table === 'task_events') return {
+      select: () => ({ eq: () => ({ single: jest.fn().mockResolvedValue({
+        data: { id: 'ev1', user_id: eventOwnerId, type: eventType },
+      }) }) }),
+      delete: () => ({ eq: jest.fn().mockResolvedValue({ error: null }) }),
+    }
+    return {}
+  })
+}
+
+describe('DELETE /api/tasks/[id]/events/[eventId]', () => {
+  it('returns 401 when not authenticated', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: null } })
+    const res = await DELETE(new NextRequest('http://localhost'), eventCtx)
+    expect(res.status).toBe(401)
+  })
+
+  it('returns 404 when event not found', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } })
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'profiles') return {
+        select: () => ({ eq: () => ({ single: jest.fn().mockResolvedValue({ data: { role: 'sa', full_name: 'Alice' } }) }) }),
+      }
+      if (table === 'task_events') return {
+        select: () => ({ eq: () => ({ single: jest.fn().mockResolvedValue({ data: null }) }) }),
+        delete: () => ({ eq: jest.fn() }),
+      }
+      return {}
+    })
+    const res = await DELETE(new NextRequest('http://localhost'), eventCtx)
+    expect(res.status).toBe(404)
+  })
+
+  it('returns 403 when event type is not comment', async () => {
+    setupDeleteMocks({ role: 'sa', eventType: 'status_change' })
+    const res = await DELETE(new NextRequest('http://localhost'), eventCtx)
+    expect(res.status).toBe(403)
+  })
+
+  it('returns 403 when caller is not owner and not SA', async () => {
+    setupDeleteMocks({ role: 'pm', eventOwnerId: 'u2' })
+    const res = await DELETE(new NextRequest('http://localhost'), eventCtx)
+    expect(res.status).toBe(403)
+  })
+
+  it('returns 200 when owner deletes own comment', async () => {
+    setupDeleteMocks({ role: 'pm', eventOwnerId: 'u1' })
+    const res = await DELETE(new NextRequest('http://localhost'), eventCtx)
+    expect(res.status).toBe(200)
+  })
+
+  it('returns 200 when SA deletes any comment', async () => {
+    setupDeleteMocks({ role: 'sa', eventOwnerId: 'u2' })
+    const res = await DELETE(new NextRequest('http://localhost'), eventCtx)
+    expect(res.status).toBe(200)
+  })
+})
