@@ -45,9 +45,12 @@ export default function TaskItem({
 
   useEffect(() => {
     if (!canAssign) return
-    fetch(`/api/members?project_id=${projectId}`)
+    const controller = new AbortController()
+    fetch(`/api/members?project_id=${projectId}`, { signal: controller.signal })
       .then(r => r.json())
-      .then(setMembers)
+      .then(data => { if (Array.isArray(data)) setMembers(data) })
+      .catch(() => {})
+    return () => controller.abort()
   }, [canAssign, projectId])
 
   const isAssignee = task.assigned_to === currentUserId

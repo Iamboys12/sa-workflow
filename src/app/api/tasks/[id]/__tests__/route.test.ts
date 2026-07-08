@@ -58,6 +58,8 @@ function setupMocks({
   })
 }
 
+beforeEach(() => { mockFrom.mockReset() })
+
 describe('PATCH /api/tasks/[id]', () => {
   it('returns 401 when not authenticated', async () => {
     mockGetUser.mockResolvedValue({ data: { user: null } })
@@ -95,5 +97,17 @@ describe('PATCH /api/tasks/[id]', () => {
     setupMocks({ role: 'pm', membership: null, assignedTo: 'u2' })
     const res = await PATCH(makeReq({ status: 'done' }), ctx)
     expect(res.status).toBe(403)
+  })
+
+  it('returns 404 when task is not found', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } })
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'tasks') return {
+        select: () => ({ eq: () => ({ single: jest.fn().mockResolvedValue({ data: null }) }) }),
+      }
+      return {}
+    })
+    const res = await PATCH(makeReq({ status: 'done' }), ctx)
+    expect(res.status).toBe(404)
   })
 })

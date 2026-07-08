@@ -1,4 +1,11 @@
-SELECT cron.schedule(
+create extension if not exists pg_cron;
+
+-- Unschedule first for idempotency (re-running migration won't error on duplicate name)
+select cron.unschedule('due-date-reminder') where exists (
+  select 1 from cron.job where jobname = 'due-date-reminder'
+);
+
+select cron.schedule(
   'due-date-reminder',
   '0 8 * * *',
   $$
