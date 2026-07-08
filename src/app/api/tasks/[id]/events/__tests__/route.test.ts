@@ -34,7 +34,7 @@ function setupMocks({ role = 'sa', isMember = true, events = sampleEvents } = {}
     }
     if (table === 'profiles') return {
       select: () => ({
-        eq: () => ({ single: jest.fn().mockResolvedValue({ data: { role } }) }),
+        eq: () => ({ single: jest.fn().mockResolvedValue({ data: { role, full_name: 'Alice' } }) }),
         in: jest.fn().mockResolvedValue({ data: [] }),
       }),
     }
@@ -98,12 +98,6 @@ describe('POST /api/tasks/[id]/events', () => {
     expect(res.status).toBe(401)
   })
 
-  it('returns 403 when caller is not a project member', async () => {
-    setupMocks({ role: 'pm', isMember: false })
-    const res = await POST(makeReq({ body: 'hello' }), ctx)
-    expect(res.status).toBe(403)
-  })
-
   it('returns 400 when body is empty', async () => {
     setupMocks({ role: 'sa' })
     const res = await POST(makeReq({ body: '   ' }), ctx)
@@ -114,6 +108,12 @@ describe('POST /api/tasks/[id]/events', () => {
     setupMocks({ role: 'sa' })
     const res = await POST(makeReq({}), ctx)
     expect(res.status).toBe(400)
+  })
+
+  it('returns 403 when caller is not a project member', async () => {
+    setupMocks({ role: 'pm', isMember: false })
+    const res = await POST(makeReq({ body: 'hello' }), ctx)
+    expect(res.status).toBe(403)
   })
 
   it('returns 201 with created event for valid comment', async () => {

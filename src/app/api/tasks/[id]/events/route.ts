@@ -106,13 +106,14 @@ export async function POST(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { allowed } = await getMembershipCheck(supabase, user.id, params.id)
-  if (!allowed) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-
+  // Validate body before expensive membership DB queries
   const reqBody = await req.json()
   if (!reqBody.body?.trim()) {
     return NextResponse.json({ error: 'body is required' }, { status: 400 })
   }
+
+  const { allowed } = await getMembershipCheck(supabase, user.id, params.id)
+  if (!allowed) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const { data: event, error } = await supabase
     .from('task_events')
@@ -121,5 +122,13 @@ export async function POST(
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(event, { status: 201 })
+
+  // Shape response to match TaskEvent (user_name required)
+  const { data: profile } = await supabase
+    .from('profiles').select('full_name').eq('id', user.id).single()
+
+  return NextResponse.json({
+    ...event,
+    user_name: profile?.full_name ?? '',
+  }, { status: 201 })
 }
