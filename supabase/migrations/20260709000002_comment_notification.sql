@@ -1,3 +1,5 @@
+DROP TRIGGER IF EXISTS on_comment_added ON task_events;
+
 create or replace function notify_comment_added()
 returns trigger language plpgsql security definer set search_path = public as $$
 declare

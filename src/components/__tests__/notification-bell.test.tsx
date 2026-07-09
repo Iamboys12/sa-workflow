@@ -111,6 +111,25 @@ describe('NotificationBell', () => {
     })
   })
 
+  it('renders step_status_changed message correctly', async () => {
+    const stepNotif: Notification = {
+      id: 'n3',
+      user_id: 'u1',
+      type: 'step_status_changed',
+      payload: { step_title: 'Design Review', new_status: 'done', project_id: 'p3' },
+      read: true,
+      created_at: new Date().toISOString(),
+    }
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve([stepNotif]),
+    } as Response)
+    render(<NotificationBell userId="u1" />)
+    await waitFor(() => {
+      expect(screen.getByText('Step "Design Review" is now done')).toBeInTheDocument()
+    })
+  })
+
   it('renders comment_added message correctly', async () => {
     render(<NotificationBell userId="u1" />)
     await waitFor(() => {
