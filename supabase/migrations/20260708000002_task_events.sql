@@ -38,6 +38,10 @@ create policy "task_events_insert" on task_events for insert
     )
   );
 
+-- Enable Realtime: full replica identity so DELETE payloads include the old row id
+alter table task_events replica identity full;
+alter publication supabase_realtime add table task_events;
+
 -- Only the comment author or SA can delete; activity events cannot be deleted
 create policy "task_events_delete" on task_events for delete
   using (

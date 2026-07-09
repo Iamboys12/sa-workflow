@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import TaskDetailModal from '../task-detail-modal'
 
 const mockEvents = [
@@ -68,5 +68,32 @@ describe('TaskDetailModal', () => {
   it('SA sees delete button on any comment', async () => {
     render(<TaskDetailModal {...baseProps} currentUserId="u2" isSA={true} />)
     expect(await screen.findByTestId('delete-e1')).toBeInTheDocument()
+  })
+
+  it('submits comment via POST and clears the input', async () => {
+    render(<TaskDetailModal {...baseProps} />)
+    await screen.findByText('Hello world')
+
+    const input = screen.getByPlaceholderText('พิมพ์ comment...')
+    fireEvent.change(input, { target: { value: 'New comment' } })
+    fireEvent.submit(input.closest('form')!)
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      '/api/tasks/t1/events',
+      expect.objectContaining({ method: 'POST', body: JSON.stringify({ body: 'New comment' }) })
+    )
+    await waitFor(() => expect((input as HTMLInputElement).value).toBe(''))
+  })
+
+  it('deletes comment via DELETE and removes it from the list', async () => {
+    render(<TaskDetailModal {...baseProps} currentUserId="u1" />)
+    const deleteBtn = await screen.findByTestId('delete-e1')
+
+    fireEvent.click(deleteBtn)
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      '/api/tasks/t1/events/e1',
+      expect.objectContaining({ method: 'DELETE' })
+    )
   })
 })
