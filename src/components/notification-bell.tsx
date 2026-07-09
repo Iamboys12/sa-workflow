@@ -17,6 +17,7 @@ function formatMessage(n: Notification): string {
   const p = n.payload as Record<string, string>
   if (n.type === 'task_assigned') return `You were assigned to "${p.task_title}"`
   if (n.type === 'step_status_changed') return `Step "${p.step_title}" is now ${p.new_status}`
+  if (n.type === 'comment_added') return `${p.commenter_name} commented on "${p.task_title}"`
   return n.type
 }
 
