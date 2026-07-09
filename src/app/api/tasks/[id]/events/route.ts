@@ -68,7 +68,7 @@ export async function GET(
   const profileMap: Record<string, string> = {}
   if (userIds.size > 0) {
     const { data: profiles } = await supabase
-      .from('profiles').select('id, full_name').in('id', [...userIds])
+      .from('profiles').select('id, full_name').in('id', Array.from(userIds))
     for (const p of profiles ?? []) profileMap[p.id] = p.full_name
   }
 

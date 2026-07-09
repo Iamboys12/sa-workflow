@@ -7,6 +7,7 @@ import { NextRequest } from 'next/server'
 const mockGetUser = jest.fn()
 const mockFrom = jest.fn()
 const mockUpdateFn = jest.fn()
+const mockInsertFn = jest.fn()
 
 jest.mock('@/lib/supabase/server', () => ({
   createServerSupabase: jest.fn().mockResolvedValue({
@@ -31,13 +32,21 @@ function setupMocks({
   role = 'sa',
   membership = null as null | { role: string },
   assignedTo = 'u2',
+  taskStatus = 'todo' as string,
+  taskDueDate = null as string | null,
 } = {}) {
   mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } })
   mockUpdateFn.mockClear()
+  mockInsertFn.mockClear()
   mockFrom.mockImplementation((table: string) => {
     if (table === 'tasks') return {
       select: () => ({ eq: () => ({ single: jest.fn().mockResolvedValue({
-        data: { assigned_to: assignedTo, project_steps: { project_id: 'p1' } },
+        data: {
+          assigned_to: assignedTo,
+          status: taskStatus,
+          due_date: taskDueDate,
+          project_steps: { project_id: 'p1' },
+        },
       }) }) }),
       update: (updates: unknown) => {
         mockUpdateFn(updates)
@@ -53,6 +62,12 @@ function setupMocks({
       select: () => ({ eq: () => ({ eq: () => ({ single: jest.fn().mockResolvedValue({
         data: membership,
       }) }) }) }),
+    }
+    if (table === 'task_events') return {
+      insert: (rows: unknown) => {
+        mockInsertFn(rows)
+        return Promise.resolve({ error: null })
+      },
     }
     return {}
   })
@@ -97,6 +112,34 @@ describe('PATCH /api/tasks/[id]', () => {
     setupMocks({ role: 'pm', membership: null, assignedTo: 'u2' })
     const res = await PATCH(makeReq({ status: 'done' }), ctx)
     expect(res.status).toBe(403)
+  })
+
+  it('inserts status_change event when status changes', async () => {
+    setupMocks({ role: 'sa', taskStatus: 'todo' })
+    const res = await PATCH(makeReq({ status: 'in_progress' }), ctx)
+    expect(res.status).toBe(200)
+    expect(mockInsertFn).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({ type: 'status_change', meta: { from: 'todo', to: 'in_progress' } })
+      ])
+    )
+  })
+
+  it('inserts assigned event when assigned_to changes', async () => {
+    setupMocks({ role: 'sa', assignedTo: 'u2' })
+    const res = await PATCH(makeReq({ assigned_to: 'u3' }), ctx)
+    expect(res.status).toBe(200)
+    expect(mockInsertFn).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({ type: 'assigned', meta: { from_user_id: 'u2', to_user_id: 'u3' } })
+      ])
+    )
+  })
+
+  it('does not insert activity event when value does not change', async () => {
+    setupMocks({ role: 'sa', taskStatus: 'todo' })
+    await PATCH(makeReq({ status: 'todo' }), ctx)
+    expect(mockInsertFn).not.toHaveBeenCalled()
   })
 
   it('returns 404 when task is not found', async () => {

@@ -14,7 +14,7 @@ export async function PATCH(
 
   const { data: task } = await supabase
     .from('tasks')
-    .select('assigned_to, project_steps!project_step_id(project_id)')
+    .select('assigned_to, status, due_date, project_steps!project_step_id(project_id)')
     .eq('id', params.id)
     .single()
   if (!task) return NextResponse.json({ error: 'Not found' }, { status: 404 })
@@ -58,6 +58,23 @@ export async function PATCH(
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  const activityEvents: Array<{ task_id: string; user_id: string; type: string; meta: unknown }> = []
+
+  if ('status' in updates && updates.status !== task.status) {
+    activityEvents.push({ task_id: params.id, user_id: user.id, type: 'status_change', meta: { from: task.status, to: updates.status } })
+  }
+  if ('assigned_to' in updates && updates.assigned_to !== task.assigned_to) {
+    activityEvents.push({ task_id: params.id, user_id: user.id, type: 'assigned', meta: { from_user_id: task.assigned_to ?? null, to_user_id: updates.assigned_to ?? null } })
+  }
+  if ('due_date' in updates && updates.due_date !== task.due_date) {
+    activityEvents.push({ task_id: params.id, user_id: user.id, type: 'due_date_set', meta: { from: task.due_date ?? null, to: updates.due_date ?? null } })
+  }
+
+  if (activityEvents.length > 0) {
+    await supabase.from('task_events').insert(activityEvents)
+  }
+
   return NextResponse.json(data)
 }
 
