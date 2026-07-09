@@ -23,6 +23,7 @@ const baseProps = {
   currentUserId: 'u1',
   onUpdate: jest.fn(),
   onDelete: jest.fn(),
+  onOpenDetail: jest.fn(),
 }
 
 beforeEach(() => {

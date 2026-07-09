@@ -31,6 +31,7 @@ export default function TaskItem({
   currentUserId,
   onUpdate,
   onDelete,
+  onOpenDetail,
 }: {
   task: Task
   isSA: boolean
@@ -39,6 +40,7 @@ export default function TaskItem({
   currentUserId: string
   onUpdate: (id: string, updates: Partial<Task>) => Promise<void>
   onDelete: (id: string) => Promise<void>
+  onOpenDetail: (taskId: string) => void
 }) {
   const [loading, setLoading] = useState(false)
   const [members, setMembers] = useState<Member[]>([])
@@ -77,9 +79,15 @@ export default function TaskItem({
         </button>
       )}
       <div className="flex-1 min-w-0">
-        <p className={cn('text-sm', task.status === 'done' && 'line-through text-gray-400')}>
+        <button
+          onClick={() => onOpenDetail(task.id)}
+          className={cn(
+            'text-sm text-left hover:underline cursor-pointer w-full',
+            task.status === 'done' && 'line-through text-gray-400'
+          )}
+        >
           {task.title}
-        </p>
+        </button>
         {task.due_date && (
           <p className="text-xs text-gray-400">Due {task.due_date}</p>
         )}

@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import TaskItem from './task-item'
+import TaskDetailModal from './task-detail-modal'
 import type { Task } from '@/lib/types'
 
 async function fetchTasks(stepId: string): Promise<Task[]> {
@@ -28,6 +29,7 @@ export default function TaskList({
 }) {
   const qc = useQueryClient()
   const [newTitle, setNewTitle] = useState('')
+  const [openTaskId, setOpenTaskId] = useState<string | null>(null)
 
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ['tasks', stepId],
@@ -77,34 +79,49 @@ export default function TaskList({
 
   if (isLoading) return <p className="text-gray-500 text-sm">Loading tasks…</p>
 
-  return (
-    <div className="space-y-2">
-      {tasks.map(task => (
-        <TaskItem
-          key={task.id}
-          task={task}
-          isSA={isSA}
-          canAssign={canAssign}
-          projectId={projectId}
-          currentUserId={currentUserId}
-          onUpdate={(id, updates) => updateMutation.mutateAsync({ id, updates })}
-          onDelete={(id) => deleteMutation.mutateAsync(id)}
-        />
-      ))}
+  const openTask = tasks.find(t => t.id === openTaskId)
 
-      {isSA && (
-        <form onSubmit={handleCreate} className="flex gap-2 mt-3">
-          <Input
-            placeholder="Add a task…"
-            value={newTitle}
-            onChange={e => setNewTitle(e.target.value)}
-            className="flex-1"
+  return (
+    <>
+      <div className="space-y-2">
+        {tasks.map(task => (
+          <TaskItem
+            key={task.id}
+            task={task}
+            isSA={isSA}
+            canAssign={canAssign}
+            projectId={projectId}
+            currentUserId={currentUserId}
+            onUpdate={(id, updates) => updateMutation.mutateAsync({ id, updates })}
+            onDelete={(id) => deleteMutation.mutateAsync(id)}
+            onOpenDetail={(id) => setOpenTaskId(id)}
           />
-          <Button type="submit" size="sm" disabled={createMutation.isPending}>
-            Add
-          </Button>
-        </form>
+        ))}
+
+        {isSA && (
+          <form onSubmit={handleCreate} className="flex gap-2 mt-3">
+            <Input
+              placeholder="Add a task…"
+              value={newTitle}
+              onChange={e => setNewTitle(e.target.value)}
+              className="flex-1"
+            />
+            <Button type="submit" size="sm" disabled={createMutation.isPending}>
+              Add
+            </Button>
+          </form>
+        )}
+      </div>
+
+      {openTaskId && openTask && (
+        <TaskDetailModal
+          taskId={openTaskId}
+          taskTitle={openTask.title}
+          currentUserId={currentUserId}
+          isSA={isSA}
+          onClose={() => setOpenTaskId(null)}
+        />
       )}
-    </div>
+    </>
   )
 }
