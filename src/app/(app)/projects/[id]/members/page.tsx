@@ -1,11 +1,15 @@
 import { createServerSupabase } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Badge } from '@/components/ui/badge'
 import InviteMemberForm from '@/components/invite-member-form'
-import type { ProjectMember, Profile } from '@/lib/types'
+import MemberList from '@/components/member-list'
+import type { UserRole } from '@/lib/types'
 
-type MemberWithProfile = ProjectMember & { profile: Profile | null }
+type MemberWithProfile = {
+  user_id: string
+  role: UserRole
+  profile: { id: string; full_name: string } | null
+}
 
 export default async function MembersPage({ params }: { params: { id: string } }) {
   const supabase = await createServerSupabase()
@@ -33,13 +37,8 @@ export default async function MembersPage({ params }: { params: { id: string } }
       </div>
       <h1 className="text-2xl font-bold mb-6">Members — {project.name}</h1>
 
-      <div className="space-y-2 mb-8">
-        {(members as MemberWithProfile[] ?? []).map(m => (
-          <div key={m.user_id} className="flex items-center justify-between p-3 border rounded-lg">
-            <span className="text-sm">{m.profile?.full_name ?? m.user_id}</span>
-            <Badge>{m.role}</Badge>
-          </div>
-        ))}
+      <div className="mb-8">
+        <MemberList members={(members as MemberWithProfile[]) ?? []} projectId={params.id} />
       </div>
 
       <div className="border-t pt-6">
