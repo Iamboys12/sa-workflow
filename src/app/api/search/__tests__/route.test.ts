@@ -73,6 +73,16 @@ describe('GET /api/search', () => {
     expect(taskQuery.eq).toHaveBeenCalledWith('status', 'todo')
   })
 
+  it('applies assignee filter to tasks query', async () => {
+    const projectQuery = makeQuery([])
+    const taskQuery = makeQuery([])
+    mockFrom.mockImplementationOnce(() => projectQuery)
+            .mockImplementationOnce(() => taskQuery)
+    const req = new NextRequest('http://localhost/api/search?q=fix&assignee=u1')
+    await GET(req)
+    expect(taskQuery.eq).toHaveBeenCalledWith('assigned_to', 'u1')
+  })
+
   it('returns 401 when not authenticated', async () => {
     mockGetUser.mockResolvedValue({ data: { user: null } })
     const req = new NextRequest('http://localhost/api/search?q=fix')
