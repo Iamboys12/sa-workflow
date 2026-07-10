@@ -22,11 +22,13 @@ export async function GET(req: NextRequest) {
 
   const pattern = `%${q}%`
 
-  const { data: projectRows } = await supabase
+  const { data: projectRows, error: projectError } = await supabase
     .from('projects')
     .select('id, name, status')
     .ilike('name', pattern)
     .limit(5)
+
+  if (projectError) return NextResponse.json({ error: projectError.message }, { status: 500 })
 
   let taskQuery = supabase
     .from('tasks')
@@ -42,17 +44,19 @@ export async function GET(req: NextRequest) {
   if (status) taskQuery = taskQuery.eq('status', status)
   if (assignee) taskQuery = taskQuery.eq('assigned_to', assignee)
 
-  const { data: taskRows } = await taskQuery.limit(5)
+  const { data: taskRows, error: taskError } = await taskQuery.limit(5)
+
+  if (taskError) return NextResponse.json({ error: taskError.message }, { status: 500 })
 
   const tasks = (taskRows ?? []).map(r => {
-    const step = r.step as unknown as TaskJoin
+    const step = r.step as unknown as TaskJoin | null
     return {
       id: r.id,
       title: r.title,
       status: r.status,
       assigned_to: r.assigned_to,
-      project_name: step.project?.name ?? '',
-      project_id: step.project_id,
+      project_name: step?.project?.name ?? '',
+      project_id: step?.project_id ?? '',
     }
   })
 

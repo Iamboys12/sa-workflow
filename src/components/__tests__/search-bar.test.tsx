@@ -125,6 +125,24 @@ describe('SearchBar', () => {
     })
   })
 
+  it('calls fetch with assignee param when assignee filter is changed', async () => {
+    mockSupabaseFrom.mockReturnValue({
+      select: () => ({
+        order: () => Promise.resolve({ data: [{ id: 'u1', full_name: 'Alice' }], error: null }),
+      }),
+    })
+    render(<SearchBar currentUserId="u1" />)
+    fireEvent.change(screen.getByTestId('search-input'), { target: { value: 'fix' } })
+    await act(async () => { jest.advanceTimersByTime(300) })
+    await waitFor(() => screen.getByTestId('assignee-filter'))
+    fireEvent.change(screen.getByTestId('assignee-filter'), { target: { value: 'u1' } })
+    await waitFor(() => {
+      const calls = (global.fetch as jest.Mock).mock.calls
+      const lastUrl = calls[calls.length - 1][0] as string
+      expect(lastUrl).toContain('assignee=u1')
+    })
+  })
+
   it('closes dropdown and clears input when Escape is pressed', async () => {
     render(<SearchBar currentUserId="u1" />)
     fireEvent.change(screen.getByTestId('search-input'), { target: { value: 'fix' } })

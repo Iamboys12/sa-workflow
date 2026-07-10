@@ -81,6 +81,9 @@ export default function SearchBar({ currentUserId }: { currentUserId: string }) 
       const data = await res.json() as SearchResults
       setResults(data)
       setOpen(true)
+    } else {
+      setResults({ projects: [], tasks: [] })
+      setOpen(true)
     }
     setLoading(false)
   }, [])
