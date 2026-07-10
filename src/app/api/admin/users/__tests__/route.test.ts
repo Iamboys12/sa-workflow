@@ -82,6 +82,13 @@ describe('GET /api/admin/users', () => {
     const res = await GET(req)
     expect(res.status).toBe(403)
   })
+
+  it('returns 401 when unauthenticated', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: null } })
+    const req = new NextRequest('http://localhost/api/admin/users')
+    const res = await GET(req)
+    expect(res.status).toBe(401)
+  })
 })
 
 describe('PATCH /api/admin/users', () => {
@@ -123,6 +130,20 @@ describe('PATCH /api/admin/users', () => {
     })
     const res = await PATCH(req)
     expect(res.status).toBe(403)
+  })
+
+  it('reactivates user — calls adminUpdate with ban_duration none', async () => {
+    const updated = { id: 'u2', full_name: 'Bob', role: 'pm', is_active: true }
+    mockFrom.mockImplementationOnce(() => makeRequesterQuery('sa'))
+            .mockImplementationOnce(() => makeUpdateQuery(updated))
+    const req = new NextRequest('http://localhost/api/admin/users', {
+      method: 'PATCH',
+      body: JSON.stringify({ user_id: 'u2', is_active: true }),
+      headers: { 'content-type': 'application/json' },
+    })
+    const res = await PATCH(req)
+    expect(res.status).toBe(200)
+    expect(mockAdminUpdate).toHaveBeenCalledWith('u2', { ban_duration: 'none' })
   })
 
   it('returns 401 when unauthenticated', async () => {
