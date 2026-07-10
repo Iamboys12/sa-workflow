@@ -87,6 +87,10 @@ export async function DELETE(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  const { data: requester } = await supabase
+    .from('profiles').select('role').eq('id', user.id).single()
+  if (requester?.role !== 'sa') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+
   const body = await req.json()
   const { project_id, user_id } = body
 

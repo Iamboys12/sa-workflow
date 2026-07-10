@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import { GET, POST, PATCH, DELETE } from '../route'
+import { POST, PATCH, DELETE } from '../route'
 import { NextRequest } from 'next/server'
 
 const mockGetUser = jest.fn()
@@ -117,6 +117,19 @@ describe('PATCH /api/members', () => {
       headers: { 'content-type': 'application/json' },
     })
     const res = await PATCH(req)
+    expect(res.status).toBe(403)
+  })
+})
+
+describe('DELETE /api/members', () => {
+  it('returns 403 for non-SA', async () => {
+    mockFrom.mockImplementationOnce(() => makeRequesterQuery('pm'))
+    const req = new NextRequest('http://localhost/api/members', {
+      method: 'DELETE',
+      body: JSON.stringify({ project_id: 'p1', user_id: 'u2' }),
+      headers: { 'content-type': 'application/json' },
+    })
+    const res = await DELETE(req)
     expect(res.status).toBe(403)
   })
 })
