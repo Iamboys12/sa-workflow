@@ -32,6 +32,11 @@ export default function Nav({ profile }: { profile: Profile | null }) {
             Templates
           </Link>
         )}
+        {profile?.role === 'sa' && (
+          <Link href="/settings/users" className="text-sm text-gray-600 hover:text-gray-900">
+            Users
+          </Link>
+        )}
       </div>
       <div className="flex items-center gap-3">
         {profile && <SearchBar currentUserId={profile.id} />}
